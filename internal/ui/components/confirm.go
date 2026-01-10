@@ -1,15 +1,33 @@
 package components
 
 import (
+	"github.com/AurelienConte/bullmq-tui/internal/redis"
 	"github.com/charmbracelet/lipgloss"
 )
 
+// ConfirmAction represents the type of action to execute
+type ConfirmAction int
+
+const (
+	ConfirmActionNone ConfirmAction = iota
+	ConfirmActionRetryJob
+	ConfirmActionRetryAllFailed
+	ConfirmActionDeleteJob
+	ConfirmActionDrainQueue
+	ConfirmActionPauseQueue
+	ConfirmActionResumeQueue
+)
+
 type ConfirmDialog struct {
-	title    string
-	message  string
-	selected int // 0 = Yes, 1 = No
-	width    int
-	height   int
+	title     string
+	message   string
+	selected  int // 0 = Yes, 1 = No
+	width     int
+	height    int
+	action    ConfirmAction
+	queueName string
+	jobID     string
+	jobState  redis.JobState
 }
 
 func NewConfirmDialog(title, message string) *ConfirmDialog {
@@ -17,6 +35,20 @@ func NewConfirmDialog(title, message string) *ConfirmDialog {
 		title:    title,
 		message:  message,
 		selected: 1, // Default to No
+		action:   ConfirmActionNone,
+	}
+}
+
+// NewConfirmDialogWithAction creates a confirm dialog with action context
+func NewConfirmDialogWithAction(title, message string, action ConfirmAction, queueName, jobID string, jobState redis.JobState) *ConfirmDialog {
+	return &ConfirmDialog{
+		title:     title,
+		message:   message,
+		selected:  1, // Default to No
+		action:    action,
+		queueName: queueName,
+		jobID:     jobID,
+		jobState:  jobState,
 	}
 }
 
@@ -31,6 +63,26 @@ func (c *ConfirmDialog) ToggleSelection() {
 
 func (c *ConfirmDialog) IsYesSelected() bool {
 	return c.selected == 0
+}
+
+// GetAction returns the action type
+func (c *ConfirmDialog) GetAction() ConfirmAction {
+	return c.action
+}
+
+// GetQueueName returns the queue name
+func (c *ConfirmDialog) GetQueueName() string {
+	return c.queueName
+}
+
+// GetJobID returns the job ID
+func (c *ConfirmDialog) GetJobID() string {
+	return c.jobID
+}
+
+// GetJobState returns the job state
+func (c *ConfirmDialog) GetJobState() redis.JobState {
+	return c.jobState
 }
 
 func (c ConfirmDialog) View() string {

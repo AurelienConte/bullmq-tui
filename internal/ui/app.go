@@ -69,6 +69,10 @@ type statsUpdatedMsg *stats.QueueStats
 type eventMsg redis.JobEvent
 type errMsg struct{ error }
 type jobCreatedMsg string
+type jobRetriedMsg struct{ ID string }
+type jobDeletedMsg struct{ ID string }
+type queueDrainedMsg struct{ Count int64 }
+type allFailedRetriedMsg struct{ Count int64 }
 
 func NewApp(conn *config.Connection, cfg *config.Config) *App {
 	ctx, cancel := context.WithCancel(context.Background())
@@ -250,6 +254,22 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		a.showToast(fmt.Sprintf("Job #%s created successfully", string(msg)), components.ToastSuccess)
 		cmds = append(cmds, a.loadJobsCmd(), a.loadQueuesCmd())
 
+	case jobRetriedMsg:
+		a.showToast(fmt.Sprintf("Job #%s retried successfully", msg.ID), components.ToastSuccess)
+		cmds = append(cmds, a.loadJobsCmd(), a.loadQueuesCmd())
+
+	case jobDeletedMsg:
+		a.showToast(fmt.Sprintf("Job #%s deleted successfully", msg.ID), components.ToastSuccess)
+		cmds = append(cmds, a.loadJobsCmd(), a.loadQueuesCmd())
+
+	case allFailedRetriedMsg:
+		a.showToast(fmt.Sprintf("Retried %d failed jobs", msg.Count), components.ToastSuccess)
+		cmds = append(cmds, a.loadJobsCmd(), a.loadQueuesCmd())
+
+	case queueDrainedMsg:
+		a.showToast(fmt.Sprintf("Drained %d jobs from queue", msg.Count), components.ToastSuccess)
+		cmds = append(cmds, a.loadJobsCmd(), a.loadQueuesCmd())
+
 	case statsUpdatedMsg:
 		a.queueStats = msg
 		a.statsPanel.SetStats(msg)
@@ -376,34 +396,50 @@ func (a *App) handleJobTableKey(msg tea.KeyMsg) tea.Cmd {
 	case "r":
 		// Retry job
 		if job := a.jobTable.SelectedJob(); job != nil {
-			a.confirm = components.NewConfirmDialog(
+			a.confirm = components.NewConfirmDialogWithAction(
 				"Retry Job",
 				fmt.Sprintf("Retry job #%s?", job.ID),
+				components.ConfirmActionRetryJob,
+				job.QueueName,
+				job.ID,
+				job.State,
 			)
 		}
 
 	case "R":
 		// Retry all failed
-		a.confirm = components.NewConfirmDialog(
+		a.confirm = components.NewConfirmDialogWithAction(
 			"Retry All Failed",
 			fmt.Sprintf("Retry all failed jobs in queue '%s'?", a.selectedQueue),
+			components.ConfirmActionRetryAllFailed,
+			a.selectedQueue,
+			"",
+			redis.JobStateFailed,
 		)
 
 	case "d":
 		// Delete job
 		if job := a.jobTable.SelectedJob(); job != nil {
-			a.confirm = components.NewConfirmDialog(
+			a.confirm = components.NewConfirmDialogWithAction(
 				"Delete Job",
 				fmt.Sprintf("Delete job #%s? This cannot be undone.", job.ID),
+				components.ConfirmActionDeleteJob,
+				job.QueueName,
+				job.ID,
+				job.State,
 			)
 		}
 
 	case "D":
 		// Drain queue
 		state := a.statsPanel.GetActiveState()
-		a.confirm = components.NewConfirmDialog(
+		a.confirm = components.NewConfirmDialogWithAction(
 			"Drain Queue",
 			fmt.Sprintf("Delete ALL %s jobs in queue '%s'? This cannot be undone.", state, a.selectedQueue),
+			components.ConfirmActionDrainQueue,
+			a.selectedQueue,
+			"",
+			state,
 		)
 	}
 
@@ -422,11 +458,20 @@ func (a *App) handleConfirmKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 	case "enter":
 		if a.confirm.IsYesSelected() {
-			// Execute the action
-			// TODO: Implement actual actions based on dialog context
-			a.showToast("Action not implemented yet", components.ToastInfo)
+			// Execute the action based on dialog context
+			var cmd tea.Cmd
+			switch a.confirm.GetAction() {
+			case components.ConfirmActionRetryJob:
+				cmd = a.retryJobCmd(a.confirm.GetQueueName(), a.confirm.GetJobID())
+			case components.ConfirmActionDeleteJob:
+				cmd = a.deleteJobCmd(a.confirm.GetQueueName(), a.confirm.GetJobID(), a.confirm.GetJobState())
+			case components.ConfirmActionRetryAllFailed:
+				cmd = a.retryAllFailedCmd(a.confirm.GetQueueName())
+			case components.ConfirmActionDrainQueue:
+				cmd = a.drainQueueCmd(a.confirm.GetQueueName(), a.confirm.GetJobState())
+			}
 			a.confirm = nil
-			return a, nil
+			return a, cmd
 		}
 		a.confirm = nil
 		return a, nil
@@ -451,9 +496,13 @@ func (a *App) handleJobDetailKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		// Retry from detail view
 		if job := a.jobDetail.Job(); job != nil {
 			a.jobDetail = nil
-			a.confirm = components.NewConfirmDialog(
+			a.confirm = components.NewConfirmDialogWithAction(
 				"Retry Job",
 				fmt.Sprintf("Retry job #%s?", job.ID),
+				components.ConfirmActionRetryJob,
+				job.QueueName,
+				job.ID,
+				job.State,
 			)
 		}
 
@@ -461,9 +510,13 @@ func (a *App) handleJobDetailKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		// Delete from detail view
 		if job := a.jobDetail.Job(); job != nil {
 			a.jobDetail = nil
-			a.confirm = components.NewConfirmDialog(
+			a.confirm = components.NewConfirmDialogWithAction(
 				"Delete Job",
 				fmt.Sprintf("Delete job #%s? This cannot be undone.", job.ID),
+				components.ConfirmActionDeleteJob,
+				job.QueueName,
+				job.ID,
+				job.State,
 			)
 		}
 	}
@@ -761,6 +814,62 @@ func (a *App) createJobCmd(queueName, jobName string, jobData, opts map[string]i
 			return errMsg{fmt.Errorf("failed to create job: %w", err)}
 		}
 		return jobCreatedMsg(jobID)
+	}
+}
+
+func (a *App) retryJobCmd(queueName, jobID string) tea.Cmd {
+	if !a.connected || a.bullmq == nil {
+		return nil
+	}
+
+	return func() tea.Msg {
+		err := a.bullmq.RetryJob(a.ctx, queueName, jobID)
+		if err != nil {
+			return errMsg{fmt.Errorf("failed to retry job: %w", err)}
+		}
+		return jobRetriedMsg{ID: jobID}
+	}
+}
+
+func (a *App) deleteJobCmd(queueName, jobID string, state redis.JobState) tea.Cmd {
+	if !a.connected || a.bullmq == nil {
+		return nil
+	}
+
+	return func() tea.Msg {
+		err := a.bullmq.DeleteJob(a.ctx, queueName, jobID, state)
+		if err != nil {
+			return errMsg{fmt.Errorf("failed to delete job: %w", err)}
+		}
+		return jobDeletedMsg{ID: jobID}
+	}
+}
+
+func (a *App) retryAllFailedCmd(queueName string) tea.Cmd {
+	if !a.connected || a.bullmq == nil {
+		return nil
+	}
+
+	return func() tea.Msg {
+		count, err := a.bullmq.RetryAllFailed(a.ctx, queueName)
+		if err != nil {
+			return errMsg{fmt.Errorf("failed to retry all failed jobs: %w", err)}
+		}
+		return allFailedRetriedMsg{Count: count}
+	}
+}
+
+func (a *App) drainQueueCmd(queueName string, state redis.JobState) tea.Cmd {
+	if !a.connected || a.bullmq == nil {
+		return nil
+	}
+
+	return func() tea.Msg {
+		count, err := a.bullmq.DrainQueue(a.ctx, queueName, state)
+		if err != nil {
+			return errMsg{fmt.Errorf("failed to drain queue: %w", err)}
+		}
+		return queueDrainedMsg{Count: count}
 	}
 }
 
