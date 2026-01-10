@@ -102,7 +102,7 @@ func (b *BullMQClient) ResumeQueue(ctx context.Context, queueName string) error 
 	return b.client.HDel(ctx, b.key(queueName, "meta"), "paused").Err()
 }
 
-// GetJobs retrieves jobs for a specific state
+// GetJobs retrieves jobs for a specific state (sorted in descending order)
 func (b *BullMQClient) GetJobs(ctx context.Context, queueName string, state JobState, start, end int64) ([]Job, error) {
 	var jobIDs []string
 	var err error
@@ -116,8 +116,8 @@ func (b *BullMQClient) GetJobs(ctx context.Context, queueName string, state JobS
 	case JobStatePaused:
 		jobIDs, err = b.client.LRange(ctx, b.key(queueName, "paused"), start, end).Result()
 	case JobStateDelayed, JobStateCompleted, JobStateFailed:
-		// These are sorted sets
-		jobIDs, err = b.client.ZRange(ctx, b.key(queueName, string(state)), start, end).Result()
+		// These are sorted sets - use ZRevRange for descending order (newest first)
+		jobIDs, err = b.client.ZRevRange(ctx, b.key(queueName, string(state)), start, end).Result()
 	default:
 		return nil, fmt.Errorf("unsupported job state: %s", state)
 	}
@@ -128,6 +128,13 @@ func (b *BullMQClient) GetJobs(ctx context.Context, queueName string, state JobS
 
 	if len(jobIDs) == 0 {
 		return []Job{}, nil
+	}
+
+	// Reverse list-based results for descending order consistency
+	if state == JobStateWaiting || state == JobStateActive || state == JobStatePaused {
+		for i, j := 0, len(jobIDs)-1; i < j; i, j = i+1, j-1 {
+			jobIDs[i], jobIDs[j] = jobIDs[j], jobIDs[i]
+		}
 	}
 
 	// Fetch job data
