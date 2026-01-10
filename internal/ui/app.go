@@ -591,11 +591,13 @@ func (a *App) updateComponentSizes() {
 	sidebarWidth := 35
 	mainHeight := a.height - headerHeight - statusBarHeight
 
+	statsPanelHeight := 8
+
 	a.header.SetSize(a.width)
 	a.sidebar.SetSize(sidebarWidth, mainHeight)
 	a.statusBar.SetSize(a.width)
-	a.statsPanel.SetSize(a.width-sidebarWidth-2, 8)
-	a.jobTable.SetSize(a.width-sidebarWidth-2, mainHeight-10)
+	a.statsPanel.SetSize(a.width-sidebarWidth-2, statsPanelHeight)
+	a.jobTable.SetSize(a.width-sidebarWidth-2, mainHeight-statsPanelHeight)
 
 	if a.help != nil {
 		a.help.SetSize(a.width, a.height)
