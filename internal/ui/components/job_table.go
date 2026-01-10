@@ -10,12 +10,13 @@ import (
 )
 
 type JobTable struct {
-	jobs    []redis.Job
-	cursor  int
-	focused bool
-	width   int
-	height  int
-	offset  int
+	jobs              []redis.Job
+	cursor            int
+	focused           bool
+	width             int
+	height            int
+	offset            int
+	selectedJobID     string // Track selected job ID for preservation across refreshes
 }
 
 func NewJobTable() JobTable {
@@ -26,13 +27,61 @@ func NewJobTable() JobTable {
 }
 
 func (jt *JobTable) SetJobs(jobs []redis.Job) {
+	// Store currently selected job ID before updating
+	previousJobID := jt.selectedJobID
+
 	jt.jobs = jobs
-	// Keep cursor in bounds
+
+	// Try to restore selection by finding the previously selected job
+	if previousJobID != "" && len(jobs) > 0 {
+		for i, job := range jobs {
+			if job.ID == previousJobID {
+				jt.cursor = i
+				// Adjust offset to keep selected job visible
+				jt.adjustOffset()
+				return
+			}
+		}
+	}
+
+	// If job wasn't found or no previous selection, keep cursor in bounds
 	if jt.cursor >= len(jobs) {
 		jt.cursor = len(jobs) - 1
 	}
 	if jt.cursor < 0 {
 		jt.cursor = 0
+	}
+
+	// Update selectedJobID to current cursor position
+	if jt.cursor >= 0 && jt.cursor < len(jobs) {
+		jt.selectedJobID = jobs[jt.cursor].ID
+	} else {
+		jt.selectedJobID = ""
+	}
+
+	jt.adjustOffset()
+}
+
+// adjustOffset ensures the cursor is visible in the viewport
+func (jt *JobTable) adjustOffset() {
+	visibleRows := jt.height - 3 // Account for header
+	if visibleRows < 1 {
+		visibleRows = 1
+	}
+
+	// If cursor is above viewport, scroll up
+	if jt.cursor < jt.offset {
+		jt.offset = jt.cursor
+	}
+
+	// If cursor is below viewport, scroll down
+	if jt.cursor >= jt.offset+visibleRows {
+		jt.offset = jt.cursor - visibleRows + 1
+	}
+
+	// Ensure offset is not negative
+	if jt.offset < 0 {
+		jt.offset = 0
 	}
 }
 
@@ -55,6 +104,10 @@ func (jt *JobTable) SelectedJob() *redis.Job {
 func (jt *JobTable) MoveUp() {
 	if jt.cursor > 0 {
 		jt.cursor--
+		// Update selected job ID
+		if jt.cursor >= 0 && jt.cursor < len(jt.jobs) {
+			jt.selectedJobID = jt.jobs[jt.cursor].ID
+		}
 		// Adjust offset if needed
 		if jt.cursor < jt.offset {
 			jt.offset = jt.cursor
@@ -65,6 +118,10 @@ func (jt *JobTable) MoveUp() {
 func (jt *JobTable) MoveDown() {
 	if jt.cursor < len(jt.jobs)-1 {
 		jt.cursor++
+		// Update selected job ID
+		if jt.cursor >= 0 && jt.cursor < len(jt.jobs) {
+			jt.selectedJobID = jt.jobs[jt.cursor].ID
+		}
 		// Adjust offset if needed
 		visibleRows := jt.height - 3 // Account for header
 		if jt.cursor >= jt.offset+visibleRows {

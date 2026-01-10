@@ -203,6 +203,10 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds = append(cmds, a.tickCmd())
 		if a.connected {
 			cmds = append(cmds, a.loadQueuesCmd())
+			// Auto-refresh job table if a queue is selected
+			if a.selectedQueue != "" {
+				cmds = append(cmds, a.loadJobsCmd())
+			}
 		}
 
 	case queuesUpdatedMsg:
