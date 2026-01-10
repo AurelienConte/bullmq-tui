@@ -117,6 +117,7 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// Check if toast expired
 	if a.toast != nil && a.toast.IsExpired() {
 		a.toast = nil
+		a.statusBar.SetMessage("") // Clear the status bar message
 	}
 
 	switch msg := msg.(type) {
@@ -337,10 +338,8 @@ func (a *App) View() string {
 		view = a.overlayCenter(view, a.jobDetail.View())
 	}
 
-	// Toast (bottom right)
-	if a.toast != nil {
-		view = a.overlayBottomRight(view, a.toast.View())
-	}
+	// Toast messages are now shown in the status bar instead of as an overlay
+	// to avoid the white screen flash issue
 
 	return view
 }
@@ -670,6 +669,21 @@ func (a *App) updateComponentSizes() {
 }
 
 func (a *App) showToast(message string, toastType components.ToastType) {
+	// Format message with icon based on type
+	var formattedMessage string
+	switch toastType {
+	case components.ToastSuccess:
+		formattedMessage = "✓ " + message
+	case components.ToastError:
+		formattedMessage = "✗ " + message
+	default:
+		formattedMessage = "ℹ " + message
+	}
+
+	// Set message in status bar
+	a.statusBar.SetMessage(formattedMessage)
+
+	// Also keep the toast for the overlay (as fallback)
 	a.toast = components.NewToast(message, toastType)
 }
 
@@ -686,7 +700,10 @@ func (a *App) overlayBottomRight(base, overlay string) string {
 	baseWidth := lipgloss.Width(base)
 	baseHeight := lipgloss.Height(base)
 
-	return lipgloss.Place(baseWidth, baseHeight, lipgloss.Right, lipgloss.Bottom, overlay)
+	// Use dark background for non-overlay areas to blend with the UI
+	return lipgloss.Place(baseWidth, baseHeight, lipgloss.Right, lipgloss.Bottom, overlay,
+		lipgloss.WithWhitespaceChars(" "),
+		lipgloss.WithWhitespaceForeground(lipgloss.Color("0")))
 }
 
 // Command generators

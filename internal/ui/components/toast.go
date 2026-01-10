@@ -24,7 +24,7 @@ func NewToast(message string, toastType ToastType) *Toast {
 		message:   message,
 		toastType: toastType,
 		createdAt: time.Now(),
-		duration:  3 * time.Second,
+		duration:  1 * time.Second,
 	}
 }
 
