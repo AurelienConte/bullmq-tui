@@ -26,7 +26,6 @@ type KeyMap struct {
 	StateDelayed  key.Binding
 	StateComplete key.Binding
 	StateFailed   key.Binding
-	NewQueue      key.Binding
 	AddJob        key.Binding
 }
 
@@ -122,10 +121,6 @@ var Keys = KeyMap{
 	StateFailed: key.NewBinding(
 		key.WithKeys("5"),
 		key.WithHelp("5", "failed"),
-	),
-	NewQueue: key.NewBinding(
-		key.WithKeys("n"),
-		key.WithHelp("n", "new queue"),
 	),
 	AddJob: key.NewBinding(
 		key.WithKeys("a"),

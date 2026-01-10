@@ -46,10 +46,9 @@ type App struct {
 	// Overlays (nil when not shown)
 	jobDetail      *components.JobDetail
 	confirm        *components.ConfirmDialog
-	help           *components.HelpOverlay
-	toast          *components.Toast
-	queueNameInput *components.QueueNameInput
-	jobDataInput   *components.JobDataInput
+	help         *components.HelpOverlay
+	toast        *components.Toast
+	jobDataInput *components.JobDataInput
 
 	// Data
 	queues        []redis.Queue
@@ -131,10 +130,6 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return a, nil
 		}
 
-		if a.queueNameInput != nil {
-			return a.handleQueueNameInputKey(msg)
-		}
-
 		if a.jobDataInput != nil {
 			return a.handleJobDataInputKey(msg)
 		}
@@ -182,14 +177,6 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if oldState != a.statsPanel.GetActiveState() {
 				cmds = append(cmds, a.loadJobsCmd())
 			}
-
-		case "n":
-			// Show queue name input modal
-			a.queueNameInput = components.NewQueueNameInput()
-			if a.width > 0 && a.height > 0 {
-				a.queueNameInput.SetSize(a.width, a.height)
-			}
-			return a, nil
 
 		case "a":
 			// Show job data input modal (only if queue selected)
@@ -329,9 +316,6 @@ func (a *App) View() string {
 	// Overlay modals (centered)
 	if a.help != nil {
 		view = a.overlayCenter(view, a.help.View())
-	}
-	if a.queueNameInput != nil {
-		view = a.overlayCenter(view, a.queueNameInput.View())
 	}
 	if a.jobDataInput != nil {
 		view = a.overlayCenter(view, a.jobDataInput.View())
@@ -555,45 +539,6 @@ func (a *App) handleJobDetailKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return a, nil
 }
 
-func (a *App) handleQueueNameInputKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	switch msg.String() {
-	case "esc":
-		a.queueNameInput = nil
-		return a, nil
-
-	case "enter":
-		queueName := a.queueNameInput.Value()
-
-		// Validate queue name
-		if queueName == "" {
-			a.queueNameInput.SetError("Queue name cannot be empty")
-			return a, nil
-		}
-
-		// Check if queue already exists
-		for _, q := range a.queues {
-			if q.Name == queueName {
-				a.queueNameInput.SetError("Queue already exists")
-				return a, nil
-			}
-		}
-
-		// Close modal and select the new queue
-		a.queueNameInput = nil
-		a.selectedQueue = queueName
-		a.showToast(fmt.Sprintf("Queue '%s' ready. Add first job to create.", queueName), components.ToastInfo)
-
-		return a, nil
-	}
-
-	// Pass other keys to the textinput component
-	var cmd tea.Cmd
-	if a.queueNameInput != nil {
-		cmd = a.queueNameInput.Update(msg)
-	}
-	return a, cmd
-}
-
 func (a *App) handleJobDataInputKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch msg.String() {
 	case "esc":
@@ -691,9 +636,6 @@ func (a *App) updateComponentSizes() {
 	}
 	if a.jobDetail != nil {
 		a.jobDetail.SetSize(a.width, a.height)
-	}
-	if a.queueNameInput != nil {
-		a.queueNameInput.SetSize(a.width, a.height)
 	}
 	if a.jobDataInput != nil {
 		a.jobDataInput.SetSize(a.width, a.height)

@@ -32,7 +32,6 @@ func (h HelpOverlay) View() string {
 		"  1-5              Switch job state tabs",
 		"",
 		KeyStyle.Render("Actions"),
-		"  n                Create new queue",
 		"  a                Add job to selected queue",
 		"  enter            View job details",
 		"  r                Retry selected job",
