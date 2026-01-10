@@ -73,6 +73,18 @@ type jobCreatedMsg string
 func NewApp(conn *config.Connection, cfg *config.Config) *App {
 	ctx, cancel := context.WithCancel(context.Background())
 
+	statusBar := components.NewStatusBar()
+	statusBar.SetFocusedArea("Queues")
+
+	sidebar := components.NewSidebar()
+	sidebar.SetFocused(true) // Set initial focus on sidebar
+
+	statsPanel := components.NewStatsPanel()
+	statsPanel.SetFocused(false)
+
+	jobTable := components.NewJobTable()
+	jobTable.SetFocused(false)
+
 	return &App{
 		ctx:        ctx,
 		cancel:     cancel,
@@ -80,10 +92,10 @@ func NewApp(conn *config.Connection, cfg *config.Config) *App {
 		cfg:        cfg,
 		focused:    focusSidebar,
 		header:     components.NewHeader(conn.Name, conn.Host, conn.Port),
-		sidebar:    components.NewSidebar(),
-		statsPanel: components.NewStatsPanel(),
-		jobTable:   components.NewJobTable(),
-		statusBar:  components.NewStatusBar(),
+		sidebar:    sidebar,
+		statsPanel: statsPanel,
+		jobTable:   jobTable,
+		statusBar:  statusBar,
 		connected:  false,
 	}
 }
@@ -543,11 +555,15 @@ func (a *App) toggleFocus() {
 	if a.focused == focusSidebar {
 		a.focused = focusJobTable
 		a.sidebar.SetFocused(false)
+		a.statsPanel.SetFocused(true)
 		a.jobTable.SetFocused(true)
+		a.statusBar.SetFocusedArea("Jobs")
 	} else {
 		a.focused = focusSidebar
 		a.sidebar.SetFocused(true)
+		a.statsPanel.SetFocused(false)
 		a.jobTable.SetFocused(false)
+		a.statusBar.SetFocusedArea("Queues")
 	}
 }
 

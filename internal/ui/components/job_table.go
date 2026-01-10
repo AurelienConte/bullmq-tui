@@ -182,11 +182,19 @@ func (jt JobTable) View() string {
 
 	content := lipgloss.JoinVertical(lipgloss.Left, rows...)
 
+	// Choose border color and style based on focus state
+	borderColor := unfocusedBorderColor
+	borderStyle := lipgloss.RoundedBorder()
+	if jt.focused {
+		borderColor = focusedBorderColor
+		borderStyle = lipgloss.ThickBorder()
+	}
+
 	return lipgloss.NewStyle().
 		Width(jt.width).
 		Height(jt.height).
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(HeaderStyle.GetForeground()).
+		Border(borderStyle).
+		BorderForeground(borderColor).
 		Padding(0, 1).
 		Render(content)
 }

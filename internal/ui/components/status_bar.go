@@ -7,8 +7,9 @@ import (
 )
 
 type StatusBar struct {
-	width   int
-	message string
+	width       int
+	message     string
+	focusedArea string // "Queues" or "Jobs"
 }
 
 func NewStatusBar() StatusBar {
@@ -23,7 +24,26 @@ func (s *StatusBar) SetMessage(msg string) {
 	s.message = msg
 }
 
+func (s *StatusBar) SetFocusedArea(area string) {
+	s.focusedArea = area
+}
+
 func (s StatusBar) View() string {
+	// Focus indicator with high contrast colors
+	focusIndicator := ""
+	if s.focusedArea != "" {
+		focusIndicator = lipgloss.NewStyle().
+			Bold(true).
+			Foreground(lipgloss.Color("#F59E0B")). // Bright yellow/orange
+			Render("Focus: ") +
+			lipgloss.NewStyle().
+			Bold(true).
+			Background(lipgloss.Color("#7C3AED")). // Purple background
+			Foreground(lipgloss.Color("#FFFFFF")). // White text
+			Padding(0, 1).
+			Render(s.focusedArea) + " │ "
+	}
+
 	// Default keybindings
 	keys := []string{
 		KeyStyle.Render("tab") + " switch",
@@ -36,11 +56,11 @@ func (s StatusBar) View() string {
 		KeyStyle.Render("q") + " quit",
 	}
 
-	keysStr := strings.Join(keys, " │ ")
+	keysStr := focusIndicator + strings.Join(keys, " │ ")
 
-	// Show custom message if set
+	// Show custom message if set (but keep focus indicator)
 	if s.message != "" {
-		keysStr = s.message
+		keysStr = focusIndicator + s.message
 	}
 
 	return StatusBarStyle.

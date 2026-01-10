@@ -11,6 +11,8 @@ var (
 	mutedColor     = lipgloss.Color("#6B7280")   // Gray
 	bgColor        = lipgloss.Color("#1F2937")   // Dark gray
 	textColor      = lipgloss.Color("#F3F4F6")   // Light gray
+	focusedBorderColor   = lipgloss.Color("#A78BFA") // Bright purple for focused panels
+	unfocusedBorderColor = lipgloss.Color("#6B7280") // Gray for unfocused panels
 
 	// Base styles
 	BaseStyle = lipgloss.NewStyle()

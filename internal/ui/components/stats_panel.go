@@ -15,13 +15,19 @@ type StatsPanel struct {
 	tabs      Tabs
 	width     int
 	height    int
+	focused   bool
 }
 
 func NewStatsPanel() StatsPanel {
 	return StatsPanel{
 		sparkline: NewSparkline(40),
 		tabs:      NewTabs(),
+		focused:   false,
 	}
+}
+
+func (s *StatsPanel) SetFocused(focused bool) {
+	s.focused = focused
 }
 
 func (s *StatsPanel) SetStats(st *stats.QueueStats) {
@@ -118,7 +124,17 @@ func (s StatsPanel) View() string {
 		sparklineView,
 	)
 
-	return StatsPanelStyle.
+	// Choose border color and style based on focus state
+	borderColor := unfocusedBorderColor
+	borderStyle := lipgloss.RoundedBorder()
+	if s.focused {
+		borderColor = focusedBorderColor
+		borderStyle = lipgloss.ThickBorder()
+	}
+
+	return StatsPanelStyle.Copy().
+		Border(borderStyle).
+		BorderForeground(borderColor).
 		Width(s.width).
 		Render(content)
 }

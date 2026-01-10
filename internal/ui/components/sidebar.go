@@ -106,7 +106,17 @@ func (s Sidebar) View() string {
 
 	content := lipgloss.JoinVertical(lipgloss.Left, items...)
 
-	return SidebarStyle.
+	// Choose border color and style based on focus state
+	borderColor := unfocusedBorderColor
+	borderStyle := lipgloss.RoundedBorder()
+	if s.focused {
+		borderColor = focusedBorderColor
+		borderStyle = lipgloss.ThickBorder()
+	}
+
+	return SidebarStyle.Copy().
+		Border(borderStyle).
+		BorderForeground(borderColor).
 		Width(s.width).
 		Height(s.height).
 		Render(content)
