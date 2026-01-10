@@ -14,6 +14,7 @@ const (
 	ConfirmActionRetryAllFailed
 	ConfirmActionDeleteJob
 	ConfirmActionDrainQueue
+	ConfirmActionCleanQueue
 	ConfirmActionPauseQueue
 	ConfirmActionResumeQueue
 )

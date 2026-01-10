@@ -72,6 +72,7 @@ type jobCreatedMsg string
 type jobRetriedMsg struct{ ID string }
 type jobDeletedMsg struct{ ID string }
 type queueDrainedMsg struct{ Count int64 }
+type queueCleanedMsg struct{ Count int64 }
 type allFailedRetriedMsg struct{ Count int64 }
 
 func NewApp(conn *config.Connection, cfg *config.Config) *App {
@@ -271,6 +272,10 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		a.showToast(fmt.Sprintf("Drained %d jobs from queue", msg.Count), components.ToastSuccess)
 		cmds = append(cmds, a.loadJobsCmd(), a.loadQueuesCmd())
 
+	case queueCleanedMsg:
+		a.showToast(fmt.Sprintf("Cleaned %d jobs from queue", msg.Count), components.ToastSuccess)
+		cmds = append(cmds, a.loadJobsCmd(), a.loadQueuesCmd())
+
 	case statsUpdatedMsg:
 		a.queueStats = msg
 		a.statsPanel.SetStats(msg)
@@ -365,6 +370,19 @@ func (a *App) handleSidebarKey(msg tea.KeyMsg) tea.Cmd {
 				fmt.Sprintf("Pause or resume queue '%s'?", a.selectedQueue),
 			)
 		}
+
+	case "c":
+		// Clean all jobs from all states in the queue
+		if a.selectedQueue != "" {
+			a.confirm = components.NewConfirmDialogWithAction(
+				"Clean Queue",
+				fmt.Sprintf("Clean ALL jobs (all states) in queue '%s'? This cannot be undone.", a.selectedQueue),
+				components.ConfirmActionCleanQueue,
+				a.selectedQueue,
+				"",
+				redis.JobStateWaiting, // State doesn't matter for CleanQueue
+			)
+		}
 	}
 
 	return nil
@@ -440,6 +458,18 @@ func (a *App) handleJobTableKey(msg tea.KeyMsg) tea.Cmd {
 			"",
 			state,
 		)
+
+	case "c":
+		// Clean/clear all jobs of current state
+		state := a.statsPanel.GetActiveState()
+		a.confirm = components.NewConfirmDialogWithAction(
+			"Clean Jobs",
+			fmt.Sprintf("Clean ALL %s jobs in queue '%s'? This cannot be undone.", state, a.selectedQueue),
+			components.ConfirmActionDrainQueue,
+			a.selectedQueue,
+			"",
+			state,
+		)
 	}
 
 	return nil
@@ -468,6 +498,8 @@ func (a *App) handleConfirmKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 				cmd = a.retryAllFailedCmd(a.confirm.GetQueueName())
 			case components.ConfirmActionDrainQueue:
 				cmd = a.drainQueueCmd(a.confirm.GetQueueName(), a.confirm.GetJobState())
+			case components.ConfirmActionCleanQueue:
+				cmd = a.cleanQueueCmd(a.confirm.GetQueueName())
 			}
 			a.confirm = nil
 			return a, cmd
@@ -887,6 +919,20 @@ func (a *App) drainQueueCmd(queueName string, state redis.JobState) tea.Cmd {
 			return errMsg{fmt.Errorf("failed to drain queue: %w", err)}
 		}
 		return queueDrainedMsg{Count: count}
+	}
+}
+
+func (a *App) cleanQueueCmd(queueName string) tea.Cmd {
+	if !a.connected || a.bullmq == nil {
+		return nil
+	}
+
+	return func() tea.Msg {
+		count, err := a.bullmq.CleanQueue(a.ctx, queueName)
+		if err != nil {
+			return errMsg{fmt.Errorf("failed to clean queue: %w", err)}
+		}
+		return queueCleanedMsg{Count: count}
 	}
 }
 

@@ -321,6 +321,30 @@ func (b *BullMQClient) DrainQueue(ctx context.Context, queueName string, state J
 	return count, nil
 }
 
+// CleanQueue removes all jobs from all states in a queue
+func (b *BullMQClient) CleanQueue(ctx context.Context, queueName string) (int64, error) {
+	states := []JobState{
+		JobStateWaiting,
+		JobStateActive,
+		JobStatePaused,
+		JobStateDelayed,
+		JobStateCompleted,
+		JobStateFailed,
+	}
+
+	totalCount := int64(0)
+	for _, state := range states {
+		count, err := b.DrainQueue(ctx, queueName, state)
+		if err != nil {
+			// Continue draining other states even if one fails
+			continue
+		}
+		totalCount += count
+	}
+
+	return totalCount, nil
+}
+
 // AddJob adds a new job to a queue
 func (b *BullMQClient) AddJob(ctx context.Context, queueName string, jobName string, jobData map[string]interface{}, opts map[string]interface{}) (string, error) {
 	// 1. Increment job ID counter

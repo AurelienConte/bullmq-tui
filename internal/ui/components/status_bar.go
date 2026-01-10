@@ -51,6 +51,7 @@ func (s StatusBar) View() string {
 		KeyStyle.Render("enter") + " view",
 		KeyStyle.Render("r") + " retry",
 		KeyStyle.Render("d") + " delete",
+		KeyStyle.Render("c") + " clean",
 		KeyStyle.Render("p") + " pause",
 		KeyStyle.Render("?") + " help",
 		KeyStyle.Render("q") + " quit",
