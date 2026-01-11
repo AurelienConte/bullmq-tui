@@ -1,0 +1,30 @@
+{
+  "name": "bullmq-tui-manual-tests",
+  "version": "1.0.0",
+  "description": "Manual testing infrastructure for BullMQ TUI",
+  "type": "module",
+  "scripts": {
+    "producer": "tsx producer.ts",
+    "worker": "tsx worker.ts",
+    "start:redis": "docker compose up -d",
+    "stop:redis": "docker compose down",
+    "logs:redis": "docker compose logs -f redis",
+    "test:basic": "npm run producer -- -q test-queue -r 2 -c 50",
+    "test:high-load": "npm run producer -- -q load-test -r 10 -c 500",
+    "test:failures": "npm run worker -- -q test-queue -s 0.3",
+    "test:delayed": "npm run producer -- -q delayed-test -r 1 -d 0.8"
+  },
+  "dependencies": {
+    "bullmq": "^5.26.0",
+    "ioredis": "^5.4.1",
+    "commander": "^12.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "typescript": "^5.7.2",
+    "tsx": "^4.19.2"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
