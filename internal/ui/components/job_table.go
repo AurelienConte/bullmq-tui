@@ -206,7 +206,7 @@ func renderTableRow(cells []string, widths []int, style lipgloss.Style, selected
 		if i < len(widths) {
 			cellStyle := lipgloss.NewStyle().Width(width)
 			if selected {
-				cellStyle = TableRowSelectedStyle.Copy().Width(width)
+				cellStyle = TableRowSelectedStyle.Width(width)
 			}
 			parts = append(parts, cellStyle.Render(truncate(cell, width)))
 		}
@@ -250,17 +250,17 @@ func formatJobStatus(job redis.Job) string {
 	case redis.JobStateWaiting:
 		return StatLabelStyle.Render("Waiting")
 	case redis.JobStateActive:
-		return StatValueStyle.Copy().
+		return StatValueStyle.
 			Foreground(lipgloss.Color("#10B981")).
 			Render("Active")
 	case redis.JobStateDelayed:
 		return StatLabelStyle.Render("Delayed")
 	case redis.JobStateCompleted:
-		return StatValueStyle.Copy().
+		return StatValueStyle.
 			Foreground(lipgloss.Color("#10B981")).
 			Render("Completed")
 	case redis.JobStateFailed:
-		return StatValueStyle.Copy().
+		return StatValueStyle.
 			Foreground(lipgloss.Color("#EF4444")).
 			Render("Failed")
 	default:

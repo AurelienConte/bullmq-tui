@@ -88,7 +88,7 @@ func (s StatsPanel) View() string {
 
 		// Failure rate
 		if s.stats.FailureRate > 0 {
-			failStyle := StatValueStyle.Copy().
+			failStyle := StatValueStyle.
 				Foreground(lipgloss.Color("#EF4444"))
 			statsItems = append(statsItems,
 				StatLabelStyle.Render("Failure: ")+
@@ -132,7 +132,7 @@ func (s StatsPanel) View() string {
 		borderStyle = lipgloss.ThickBorder()
 	}
 
-	return StatsPanelStyle.Copy().
+	return StatsPanelStyle.
 		Border(borderStyle).
 		BorderForeground(borderColor).
 		Width(s.width).

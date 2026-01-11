@@ -7,10 +7,7 @@ var (
 	primaryColor   = lipgloss.Color("#7C3AED")   // Purple
 	secondaryColor = lipgloss.Color("#10B981")   // Green
 	dangerColor    = lipgloss.Color("#EF4444")   // Red
-	warningColor   = lipgloss.Color("#F59E0B")   // Yellow
 	mutedColor     = lipgloss.Color("#6B7280")   // Gray
-	bgColor        = lipgloss.Color("#1F2937")   // Dark gray
-	textColor      = lipgloss.Color("#F3F4F6")   // Light gray
 	focusedBorderColor   = lipgloss.Color("#A78BFA") // Bright purple for focused panels
 	unfocusedBorderColor = lipgloss.Color("#6B7280") // Gray for unfocused panels
 
@@ -33,11 +30,11 @@ var (
 	QueueItemStyle = lipgloss.NewStyle().
 			Padding(0, 1)
 
-	QueueItemSelectedStyle = QueueItemStyle.Copy().
+	QueueItemSelectedStyle = QueueItemStyle.
 				Background(primaryColor).
 				Foreground(lipgloss.Color("#FFFFFF"))
 
-	QueueItemWithFailuresStyle = QueueItemStyle.Copy().
+	QueueItemWithFailuresStyle = QueueItemStyle.
 					Foreground(dangerColor)
 
 	// Stats panel
@@ -62,7 +59,7 @@ var (
 	TableRowStyle = lipgloss.NewStyle().
 			Padding(0, 1)
 
-	TableRowSelectedStyle = TableRowStyle.Copy().
+	TableRowSelectedStyle = TableRowStyle.
 				Background(primaryColor).
 				Foreground(lipgloss.Color("#FFFFFF"))
 
@@ -93,7 +90,7 @@ var (
 			Background(secondaryColor).
 			Foreground(lipgloss.Color("#FFFFFF"))
 
-	ToastErrorStyle = ToastStyle.Copy().
+	ToastErrorStyle = ToastStyle.
 			Background(dangerColor)
 
 	// Tabs
@@ -101,7 +98,7 @@ var (
 			Padding(0, 2).
 			Foreground(mutedColor)
 
-	TabActiveStyle = TabStyle.Copy().
+	TabActiveStyle = TabStyle.
 			Background(primaryColor).
 			Foreground(lipgloss.Color("#FFFFFF"))
 )

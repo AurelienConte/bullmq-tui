@@ -684,16 +684,6 @@ func (a *App) overlayCenter(base, overlay string) string {
 		lipgloss.WithWhitespaceForeground(lipgloss.Color("0")))
 }
 
-func (a *App) overlayBottomRight(base, overlay string) string {
-	baseWidth := lipgloss.Width(base)
-	baseHeight := lipgloss.Height(base)
-
-	// Use dark background for non-overlay areas to blend with the UI
-	return lipgloss.Place(baseWidth, baseHeight, lipgloss.Right, lipgloss.Bottom, overlay,
-		lipgloss.WithWhitespaceChars(" "),
-		lipgloss.WithWhitespaceForeground(lipgloss.Color("0")))
-}
-
 // Command generators
 func (a *App) tickCmd() tea.Cmd {
 	interval := time.Duration(a.cfg.Settings.RefreshIntervalMs) * time.Millisecond

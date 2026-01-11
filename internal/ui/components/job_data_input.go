@@ -108,7 +108,7 @@ func (j JobDataInput) View() string {
 
 	errorMsg := ""
 	if j.err != "" {
-		errorStyle := StatLabelStyle.Copy().Foreground(lipgloss.Color("#EF4444"))
+		errorStyle := StatLabelStyle.Foreground(lipgloss.Color("#EF4444"))
 		errorMsg = errorStyle.Render("⚠ " + j.err)
 	}
 

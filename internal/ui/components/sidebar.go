@@ -75,7 +75,7 @@ func (s Sidebar) View() string {
 		name := queue.Name
 		indicator := "   "
 		if queue.Counts.Failed > 0 {
-			indicator = StatValueStyle.Copy().Foreground(lipgloss.Color("#EF4444")).Render("[!]")
+			indicator = StatValueStyle.Foreground(lipgloss.Color("#EF4444")).Render("[!]")
 		}
 
 		pausedStr := ""
@@ -114,7 +114,7 @@ func (s Sidebar) View() string {
 		borderStyle = lipgloss.ThickBorder()
 	}
 
-	return SidebarStyle.Copy().
+	return SidebarStyle.
 		Border(borderStyle).
 		BorderForeground(borderColor).
 		Width(s.width).

@@ -92,13 +92,13 @@ func (c ConfirmDialog) View() string {
 	message := StatLabelStyle.Render(c.message)
 
 	// Buttons
-	yesStyle := TabStyle.Copy().Padding(0, 3)
-	noStyle := TabStyle.Copy().Padding(0, 3)
+	yesStyle := TabStyle.Padding(0, 3)
+	noStyle := TabStyle.Padding(0, 3)
 
 	if c.selected == 0 {
-		yesStyle = TabActiveStyle.Copy().Padding(0, 3)
+		yesStyle = TabActiveStyle.Padding(0, 3)
 	} else {
-		noStyle = TabActiveStyle.Copy().Padding(0, 3)
+		noStyle = TabActiveStyle.Padding(0, 3)
 	}
 
 	buttons := lipgloss.JoinHorizontal(
