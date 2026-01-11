@@ -547,12 +547,19 @@ func (a *App) handleJobDetailKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (a *App) handleJobDataInputKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	switch msg.String() {
-	case "esc":
+	// Check for submission keys first, before passing to textarea
+	keyStr := msg.String()
+
+	// Handle esc
+	if keyStr == "esc" {
 		a.jobDataInput = nil
 		return a, nil
+	}
 
-	case "ctrl+enter":
+	// Handle submission with alt+enter
+	isSubmit := keyStr == "alt+enter" || keyStr == "alt+return"
+
+	if isSubmit {
 		jsonStr := a.jobDataInput.Value()
 
 		// Validate JSON
@@ -569,7 +576,7 @@ func (a *App) handleJobDataInputKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 
 		if err := json.Unmarshal([]byte(jsonStr), &jobInput); err != nil {
-			a.jobDataInput.SetError("InvaljobDataInputid JSON syntax")
+			a.jobDataInput.SetError("Invalid JSON syntax")
 			return a, nil
 		}
 

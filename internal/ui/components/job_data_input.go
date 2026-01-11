@@ -27,6 +27,7 @@ func NewJobDataInput(queueName string) *JobDataInput {
 	ta.ShowLineNumbers = true
 	ta.SetHeight(10)
 	ta.SetWidth(60)
+	ta.CharLimit = 0 // No character limit
 	ta.Focus()
 
 	return &JobDataInput{
@@ -44,6 +45,26 @@ func (j *JobDataInput) SetSize(width, height int) {
 }
 
 func (j *JobDataInput) Update(msg tea.Msg) tea.Cmd {
+	// Handle special keys before passing to textarea
+	if keyMsg, ok := msg.(tea.KeyMsg); ok {
+		keyStr := keyMsg.String()
+
+		// Check for submission keys - don't pass to textarea
+		isSubmit := keyStr == "alt+enter" || keyStr == "alt+return"
+
+		if isSubmit {
+			// Don't pass submission keys to textarea - let the parent handle it
+			return nil
+		}
+
+		// Handle tab for indentation
+		if keyStr == "tab" {
+			// Insert two spaces for indentation
+			j.textarea.InsertString("  ")
+			return nil
+		}
+	}
+
 	var cmd tea.Cmd
 	j.textarea, cmd = j.textarea.Update(msg)
 	return cmd
@@ -91,7 +112,7 @@ func (j JobDataInput) View() string {
 		errorMsg = errorStyle.Render("⚠ " + j.err)
 	}
 
-	hint := StatLabelStyle.Render("Ctrl+Enter to submit  •  Esc to cancel")
+	hint := StatLabelStyle.Render("Alt+Enter to submit  •  Esc to cancel")
 
 	content := lipgloss.JoinVertical(
 		lipgloss.Left,
