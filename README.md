@@ -181,10 +181,6 @@ connections:
     password: "${REDIS_PASSWORD}"
 ```
 
-## Screenshots
-
-(Screenshots would go here when available)
-
 ## Architecture
 
 BullMQ TUI is built with:
@@ -278,19 +274,3 @@ The project uses GitHub Actions for continuous integration:
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
-
-## License
-
-MIT License - see LICENSE file for details
-
-## Credits
-
-- Inspired by [BullMQ](https://docs.bullmq.io/)
-- Built with [Charm](https://charm.sh/) tools
-- Created by [@aurelg](https://github.com/AurelienConte)
-
-## Support
-
-- 📝 [Report Issues](https://github.com/AurelienConte/bullmq-tui/issues)
-- 💬 [Discussions](https://github.com/AurelienConte/bullmq-tui/discussions)
-- 📖 [Documentation](https://github.com/AurelienConte/bullmq-tui/wiki)
