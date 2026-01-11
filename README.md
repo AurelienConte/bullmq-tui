@@ -188,7 +188,7 @@ connections:
 ## Architecture
 
 BullMQ TUI is built with:
-- **Go 1.25+** - Modern, fast, compiled language
+- **Go 1.24+** - Modern, fast, compiled language
 - **[Cobra](https://github.com/spf13/cobra)** - CLI framework
 - **[Bubbletea](https://github.com/charmbracelet/bubbletea)** - Terminal UI framework
 - **[Lipgloss](https://github.com/charmbracelet/lipgloss)** - Style definitions and layout
@@ -213,7 +213,7 @@ bullmq-tui/
 
 ### Prerequisites
 
-- Go 1.25 or higher
+- Go 1.24 or higher
 - Redis server (for testing)
 - Access to a BullMQ instance
 
