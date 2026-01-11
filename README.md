@@ -6,6 +6,9 @@ A beautiful terminal-based user interface for monitoring and managing [BullMQ](h
 
 - 📊 **Real-time Queue Monitoring** - View queue counts and stats updated live
 - 🎯 **Job Management** - Browse, view, retry, and delete jobs across all states
+- ➕ **Job Creation** - Add new jobs directly from the TUI with JSON input
+- 🔄 **Bulk Operations** - Retry all failed jobs, drain queue states, or clean entire queues
+- 📋 **Clipboard Integration** - Copy job JSON data with a single keystroke
 - 📈 **Visual Analytics** - Sparkline charts showing throughput trends
 - ⚡ **Fast Navigation** - Vim-style keybindings for efficient workflow
 - 🔄 **Event Streaming** - Real-time updates via Redis pub/sub
@@ -13,6 +16,35 @@ A beautiful terminal-based user interface for monitoring and managing [BullMQ](h
 - 🎨 **Beautiful Interface** - Clean, colorful TUI powered by Bubbletea
 
 ## Installation
+
+### Prerequisites
+
+For clipboard functionality to work, you need:
+- **Linux**: Install `xsel`, `xclip`, or `wl-clipboard` (Wayland)
+  ```bash
+  # Debian/Ubuntu
+  sudo apt-get install xsel
+  # or
+  sudo apt-get install xclip
+  # or for Wayland
+  sudo apt-get install wl-clipboard
+
+  # Fedora/RHEL
+  sudo dnf install xsel
+  # or
+  sudo dnf install xclip
+  # or for Wayland
+  sudo dnf install wl-clipboard
+
+  # Arch Linux
+  sudo pacman -S xsel
+  # or
+  sudo pacman -S xclip
+  # or for Wayland
+  sudo pacman -S wl-clipboard
+  ```
+- **macOS**: Works out of the box (uses `pbcopy`)
+- **Windows**: Works out of the box
 
 ### From Source
 
@@ -86,11 +118,12 @@ bullmq-tui version                  # Show version info
 - `1-5` - Jump to job state tabs (Waiting/Active/Delayed/Completed/Failed)
 
 #### Actions
-- `enter` - View job details
+- `a` - Add new job to selected queue
+- `enter` - View job details (press `c` to copy JSON)
 - `r` - Retry selected job
 - `R` - Retry all failed jobs in queue
 - `d` - Delete selected job
-- `D` - Drain all jobs in current state
+- `D` - Drain current state (from jobs panel) / Clean all jobs (from queue panel)
 - `p` - Pause/resume queue
 - `ctrl+r` - Force refresh
 
@@ -199,27 +232,48 @@ make clean        # Clean build artifacts
 go run . -c local
 ```
 
-## Roadmap
+### Branching Strategy
 
-### Implemented (MVP)
-- ✅ Queue discovery and monitoring
-- ✅ Job viewing and navigation
-- ✅ Real-time stats with sparklines
-- ✅ Job state filtering (waiting, active, delayed, completed, failed)
-- ✅ Connection management
-- ✅ Basic job actions (retry, delete)
+This project uses a two-branch workflow:
 
-### Planned Features
-- ⏳ Job creation from TUI
-- ⏳ Queue pause/resume actions
-- ⏳ Bulk job operations (retry all, drain queue)
-- ⏳ Job payload editing
-- ⏳ Export stats to CSV
-- ⏳ Custom themes
-- ⏳ Flow (parent/child) visualization
-- ⏳ Worker log viewing
-- ⏳ Repeatable job management
-- ⏳ Search and filtering
+- **`main`** - Stable release branch. All releases are tagged from this branch.
+- **`develop`** - Development branch. All feature work is merged here first.
+
+#### Development Workflow
+
+1. Create feature branches from `develop`
+2. Submit pull requests to `develop`
+3. When ready for release, merge `develop` into `main`
+4. Tag the release on `main` with `v*` (e.g., `v1.0.0`)
+
+### Release Process
+
+Releases are automated via GitHub Actions:
+
+1. Merge all changes to `develop` branch
+2. Merge `develop` into `main`
+3. Create and push a version tag:
+   ```bash
+   git tag v1.0.0
+   git push origin v1.0.0
+   ```
+4. GitHub Actions will automatically:
+   - Run tests
+   - Build binaries for Linux (amd64, arm64), macOS (amd64, arm64), and Windows (amd64)
+   - Create a GitHub release with binaries and checksums
+   - Generate release notes
+
+### CI/CD
+
+The project uses GitHub Actions for continuous integration:
+
+- **Test Workflow** - Runs on all pushes and PRs to `main` and `develop`
+  - Runs tests, formatting checks, and linting
+  - Builds the binary to ensure compilation succeeds
+
+- **Release Workflow** - Triggers on version tags (e.g., `v1.0.0`)
+  - Builds multi-platform binaries
+  - Creates GitHub release with assets
 
 ## Contributing
 
