@@ -355,7 +355,7 @@ func (a *App) handleSidebarKey(msg tea.KeyMsg) tea.Cmd {
 			)
 		}
 
-	case "c":
+	case "D":
 		// Clean all jobs from all states in the queue
 		if a.selectedQueue != "" {
 			a.confirm = components.NewConfirmDialogWithAction(
@@ -432,23 +432,11 @@ func (a *App) handleJobTableKey(msg tea.KeyMsg) tea.Cmd {
 		}
 
 	case "D":
-		// Drain queue
+		// Drain queue (all jobs in current state)
 		state := a.statsPanel.GetActiveState()
 		a.confirm = components.NewConfirmDialogWithAction(
 			"Drain Queue",
 			fmt.Sprintf("Delete ALL %s jobs in queue '%s'? This cannot be undone.", state, a.selectedQueue),
-			components.ConfirmActionDrainQueue,
-			a.selectedQueue,
-			"",
-			state,
-		)
-
-	case "c":
-		// Clean/clear all jobs of current state
-		state := a.statsPanel.GetActiveState()
-		a.confirm = components.NewConfirmDialogWithAction(
-			"Clean Jobs",
-			fmt.Sprintf("Clean ALL %s jobs in queue '%s'? This cannot be undone.", state, a.selectedQueue),
 			components.ConfirmActionDrainQueue,
 			a.selectedQueue,
 			"",
