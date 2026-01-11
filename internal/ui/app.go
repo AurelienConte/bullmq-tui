@@ -10,6 +10,7 @@ import (
 	"github.com/AurelienConte/bullmq-tui/internal/redis"
 	"github.com/AurelienConte/bullmq-tui/internal/stats"
 	"github.com/AurelienConte/bullmq-tui/internal/ui/components"
+	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -521,6 +522,24 @@ func (a *App) handleJobDetailKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 				job.ID,
 				job.State,
 			)
+		}
+
+	case "c":
+		// Copy job JSON to clipboard
+		if job := a.jobDetail.Job(); job != nil {
+			// Marshal job to JSON
+			jsonBytes, err := json.MarshalIndent(job, "", "  ")
+			if err != nil {
+				a.showToast(fmt.Sprintf("Failed to marshal JSON: %v", err), components.ToastError)
+				return a, nil
+			}
+
+			// Copy to clipboard
+			if err := clipboard.WriteAll(string(jsonBytes)); err != nil {
+				a.showToast(fmt.Sprintf("Failed to copy to clipboard: %v", err), components.ToastError)
+			} else {
+				a.showToast("Job JSON copied to clipboard!", components.ToastSuccess)
+			}
 		}
 	}
 
