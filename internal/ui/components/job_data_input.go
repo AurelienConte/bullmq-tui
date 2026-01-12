@@ -87,16 +87,16 @@ func (j *JobDataInput) Validate() error {
 
 	var parsed map[string]interface{}
 	if err := json.Unmarshal([]byte(jsonStr), &parsed); err != nil {
-		return fmt.Errorf("Invalid JSON: %v", err)
+		return fmt.Errorf("invalid JSON: %v", err)
 	}
 
 	name, nameOk := parsed["name"].(string)
 	if !nameOk || name == "" {
-		return fmt.Errorf("Missing or invalid 'name' field (must be string)")
+		return fmt.Errorf("missing or invalid 'name' field (must be string)")
 	}
 
 	if _, dataOk := parsed["data"]; !dataOk {
-		return fmt.Errorf("Missing 'data' field")
+		return fmt.Errorf("missing 'data' field")
 	}
 
 	return nil

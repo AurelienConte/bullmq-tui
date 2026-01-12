@@ -50,7 +50,9 @@ func (e *EventListener) Subscribe(ctx context.Context, queues []string) (<-chan 
 	}
 
 	go func() {
-		defer pubsub.Close()
+		defer func() {
+			_ = pubsub.Close()
+		}()
 
 		ch := pubsub.Channel()
 		for {
